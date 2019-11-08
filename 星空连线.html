@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        canvas{
+            display: block;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>       
+        function myCanvas(num){
+            this.ele = document.getElementById('canvas')//获取画布
+            this.cxt = this.ele.getContext('2d')//获取画笔
+            this.handleResize()
+            this.num = num;//记录小圆点的个数
+            this.data = [];//存储信息
+            this.isMoved = false;
+            this.init();            
+        }
+
+        myCanvas.prototype = {
+            init(){
+                this.saveData()
+                this.move()
+                document.addEventListener('mousemove',this.handleMouse.bind(this))
+                window.addEventListener('resize',this.handleResize.bind(this))
+            },
+            handleResize(){
+                this.ele.width = window.innerWidth;
+                this.ele.height = window.innerHeight;
+            },
+            handleMouse(e){
+                this.isMoved = true;
+                var x1 = e.clientX;
+                var y1 = e.clientY;
+                for(var i = 0;i < this.num;i++){
+                    var x2 = this.data[i].x;
+                    var y2 = this.data[i].y;
+                    if(Math.pow(x1-x2,2) + Math.pow(y1-y2,2) <= 110 * 110){
+                        this.line(x1,y1,x2,y2)
+                    }
+                }
+            },
+            saveData(){
+                for(var i=0;i<this.num;i++){
+                    this.data.push({
+                        x:Math.random()*window.innerWidth,
+                        y:Math.random()*window.innerHeight,
+                        r:Math.random()*3+1,
+                        speedX:Math.random()-0.5,
+                        speedY:Math.random()-0.5,
+                    })
+                }
+            },
+            //绘制圆形
+            circle(x,y,r){
+                this.cxt.beginPath();
+                this.cxt.fillStyle = 'pink';
+                this.cxt.arc(x,y,r,0,Math.PI*2);
+                this.cxt.closePath();
+                this.cxt.fill()
+            },
+            line(x1,y1,x2,y2){
+                this.cxt.beginPath()
+                //渐变线条颜色
+                var color = this.cxt.createLinearGradient(x1,y1,x2,y2)
+                color.addColorStop(0, '#333');
+                color.addColorStop(1, this.isMoved?'#fc3':'#f9f');
+                this.cxt.strokeStyle = color;
+                this.cxt.lineWidth = 2;
+                this.cxt.moveTo(x1,y1)
+                this.cxt.lineTo(x2,y2)
+                this.cxt.closePath()
+                this.cxt.stroke()
+            },
+            //让圆点运动
+            move(){
+                setInterval(this.draw.bind(this),20)
+            },
+            //点之间的连线
+            draw(){
+                this.isMoved = false;
+                this.cxt.clearRect(0,0,window.innerWidth,window.innerHeight)
+                for(var i=0;i<this.num;i++){
+                    var x1 = this.data[i].x;
+                    var y1 = this.data[i].y;
+                    var r1 = this.data[i].r;
+                    this.circle(x1,y1,r1)
+                    for(var j=i+1;j<this.num;j++){
+                        var x2 = this.data[j].x;
+                        var y2 = this.data[j].y;
+                        var r2 = this.data[j].r;
+
+                        if(Math.pow(x1-x2,2) + Math.pow(y1-y2,2) <= 70 * 70){
+                            this.line(x1,y1,x2,y2)
+                        }
+                    }
+                    //更新圆点的坐标
+                    this.data[i].x += this.data[i].speedX;
+                    this.data[i].y += this.data[i].speedY;
+
+                    //边界检测
+                    if(this.data[i].x<=0||this.data[i].x>=window.innerWidth){
+                        this.data[i].speedX = -this.data[i].speedX
+                    }
+                    if(this.data[i].y<=0||this.data[i].y>=window.innerHeight){
+                        this.data[i].speedY = -this.data[i].speedY
+                    }
+                }
+            }
+        }
+        var sky = new myCanvas(250);
+    </script>
+</body>
+</html>
